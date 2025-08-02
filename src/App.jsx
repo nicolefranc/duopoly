@@ -26,6 +26,10 @@ export default function App() {
   const [showCardModal, setShowCardModal] = useState(false);
   const [currentCard, setCurrentCard] = useState(null);
   const [showBailModal, setShowBailModal] = useState(false);
+  const [showBankruptcyModal, setShowBankruptcyModal] = useState(false);
+  const [showSellPropertiesModal, setShowSellPropertiesModal] = useState(false);
+  const [bankruptPlayer, setBankruptPlayer] = useState(null);
+  const [gameEnded, setGameEnded] = useState(false);
   
   // Jail system state
   const [player1JailTurns, setPlayer1JailTurns] = useState(0);
@@ -128,6 +132,99 @@ export default function App() {
     }
   };
 
+  const getPlayerProperties = (playerNumber) => {
+    const ownedProperties = [];
+    Object.entries(propertyOwnership).forEach(([propertyIndex, owner]) => {
+      if (owner === playerNumber) {
+        const property = properties[parseInt(propertyIndex)];
+        const houses = propertyHouses[propertyIndex] || 0;
+        ownedProperties.push({ 
+          ...property, 
+          houses, 
+          propertyIndex: parseInt(propertyIndex),
+          sellPrice: Math.floor(property.price * 0.8) // 20% less than original price
+        });
+      }
+    });
+    return ownedProperties;
+  };
+
+  const checkBankruptcy = (playerNumber) => {
+    const playerCoins = playerNumber === 1 ? player1Coins : player2Coins;
+    const playerProperties = getPlayerProperties(playerNumber);
+    
+    console.log(`Checking bankruptcy for Player ${playerNumber}:`, { playerCoins, propertyCount: playerProperties.length });
+    
+    if (playerCoins < 0) {
+      console.log(`Player ${playerNumber} has negative coins: ${playerCoins}`);
+      if (playerProperties.length === 0) {
+        // No properties to sell - declare bankruptcy
+        console.log(`Player ${playerNumber} has no properties - declaring bankruptcy`);
+        setBankruptPlayer(playerNumber);
+        setShowBankruptcyModal(true);
+        setGameEnded(true);
+        return true;
+      } else {
+        // Has properties - offer to sell them
+        console.log(`Player ${playerNumber} has ${playerProperties.length} properties - offering to sell`);
+        setBankruptPlayer(playerNumber);
+        setShowSellPropertiesModal(true);
+        return true;
+      }
+    }
+    return false;
+  };
+
+  const sellProperty = (propertyIndex) => {
+    const property = properties[propertyIndex];
+    const houses = propertyHouses[propertyIndex] || 0;
+    const sellPrice = Math.floor(property.price * 0.8);
+    
+    // Remove houses from the property
+    setPropertyHouses(prev => ({ ...prev, [propertyIndex]: 0 }));
+    
+    // Remove ownership
+    setPropertyOwnership(prev => ({ ...prev, [propertyIndex]: null }));
+    
+    // Add coins to the player
+    if (bankruptPlayer === 1) {
+      setPlayer1Coins(prev => {
+        const newCoins = prev + sellPrice;
+        console.log(`Player 1 sold ${property.name} for ${sellPrice}, new balance: ${newCoins}`);
+        return newCoins;
+      });
+    } else {
+      setPlayer2Coins(prev => {
+        const newCoins = prev + sellPrice;
+        console.log(`Player 2 sold ${property.name} for ${sellPrice}, new balance: ${newCoins}`);
+        return newCoins;
+      });
+    }
+    
+    setMessage(`Player ${bankruptPlayer} sold ${property.name} for ${sellPrice} coins!`);
+    
+    // Check if player is still bankrupt after selling
+    setTimeout(() => {
+      const currentCoins = bankruptPlayer === 1 ? player1Coins : player2Coins;
+      console.log(`Checking bankruptcy after sale for Player ${bankruptPlayer}, coins: ${currentCoins}`);
+      
+      if (currentCoins < 0) {
+        const remainingProperties = getPlayerProperties(bankruptPlayer);
+        console.log(`Player ${bankruptPlayer} still has ${remainingProperties.length} properties`);
+        
+        if (remainingProperties.length === 0) {
+          console.log(`Player ${bankruptPlayer} has no more properties - declaring bankruptcy`);
+          setShowSellPropertiesModal(false);
+          setShowBankruptcyModal(true);
+          setGameEnded(true);
+        }
+      } else {
+        console.log(`Player ${bankruptPlayer} is no longer bankrupt`);
+        // Don't automatically close modal - let player choose when to continue
+      }
+    }, 100);
+  };
+
   const checkIfPassedPicnic = (oldPos, newPos) => {
     return (newPos < oldPos) || oldPos === 0
     // // "Have a picnic" is at position 0
@@ -186,6 +283,11 @@ export default function App() {
     setShowActionModal(false);
     setCurrentAction(null);
     
+    // Check for bankruptcy after property action
+    if (checkBankruptcy(turn)) {
+      return; // Don't switch turns if bankruptcy modal is shown
+    }
+    
     // Switch turns after action is completed
     setTimeout(() => {
       setTurn(prev => (prev === 1 ? 2 : 1));
@@ -231,7 +333,12 @@ export default function App() {
       const rewardText = utility.reward >= 0 ? `gained ${utility.reward}` : `lost ${Math.abs(utility.reward)}`;
       setMessage(`Player ${turn} ${rewardText} coins from ${utility.name}!`);
       
-      // Switch turns after utility
+      // Check for bankruptcy after utility
+      if (checkBankruptcy(turn)) {
+        return; // Don't switch turns if bankruptcy modal is shown
+      }
+      
+      // Switch turns after a delay if no bankruptcy
       setTimeout(() => {
         setTurn(prev => (prev === 1 ? 2 : 1));
       }, 1000);
@@ -273,7 +380,12 @@ export default function App() {
         const rewardText = cornerCard.reward >= 0 ? `gained ${cornerCard.reward}` : `lost ${Math.abs(cornerCard.reward)}`;
         setMessage(`Player ${turn} ${rewardText} coins from ${cornerCard.name}!`);
         
-        // Switch turns after corner card
+        // Check for bankruptcy after corner card
+        if (checkBankruptcy(turn)) {
+          return; // Don't switch turns if bankruptcy modal is shown
+        }
+        
+        // Switch turns after a delay if no bankruptcy
         setTimeout(() => {
           setTurn(prev => (prev === 1 ? 2 : 1));
         }, 1000);
@@ -333,8 +445,25 @@ export default function App() {
         }
         setMessage(`Player ${turn} paid ${rentAmount} coins rent to Player ${owner} for ${property.name}!`);
       } else {
-        // Player can't afford rent - they lose
-        setMessage(`Player ${turn} can't afford the rent and loses the game!`);
+        // Player can't afford rent - pay what they can and check bankruptcy
+        setCurrentPlayerCoins(0);
+        if (turn === 1) {
+          setPlayer2Coins(player2Coins + currentCoins);
+        } else {
+          setPlayer1Coins(player1Coins + currentCoins);
+        }
+        setMessage(`Player ${turn} paid all their coins (${currentCoins}) but still owes ${rentAmount - currentCoins}!`);
+        
+        // Check for bankruptcy immediately
+        if (checkBankruptcy(turn)) {
+          return; // Don't switch turns if bankruptcy modal is shown
+        }
+        
+        // Switch turns after a delay if no bankruptcy
+        setTimeout(() => {
+          setTurn(prev => (prev === 1 ? 2 : 1));
+        }, 1000);
+        return;
       }
       
       // Switch turns after rent payment
@@ -345,6 +474,8 @@ export default function App() {
   };
 
   const handleRoll = () => {
+    if (gameEnded) return; // Don't allow rolling if game is over
+    
     const currentJailState = getCurrentPlayerJailState();
     
     // Check if current player is in jail
@@ -409,9 +540,9 @@ export default function App() {
     const passedPicnic = checkIfPassedPicnic(oldPos, newPos);
     if (passedPicnic) {
       const currentCoins = getCurrentPlayerCoins();
-      const newCoins = currentCoins + 200; // Picnic reward
+      const newCoins = currentCoins + 100; // Picnic reward
       setCurrentPlayerCoins(newCoins);
-      setMessage(`Player ${turn} passed "Have a picnic" and gained 200 coins! 🧺`);
+      setMessage(`Player ${turn} passed "Have a picnic" and gained 100 coins! 🧺`);
     }
 
     // Handle landing on property
@@ -434,7 +565,7 @@ export default function App() {
     if (currentCard) {
       const reward = currentCard.card.reward;
       const currentCoins = getCurrentPlayerCoins();
-      const newCoins = Math.max(0, currentCoins + reward); // Prevent negative coins
+      const newCoins = currentCoins + reward; // Allow negative coins for bankruptcy check
       
       setCurrentPlayerCoins(newCoins);
       
@@ -444,6 +575,11 @@ export default function App() {
     
     setShowCardModal(false);
     setCurrentCard(null);
+    
+    // Check for bankruptcy after card reward
+    if (checkBankruptcy(turn)) {
+      return; // Don't switch turns if bankruptcy modal is shown
+    }
     
     // Switch turns after card action
     setTimeout(() => {
@@ -621,6 +757,97 @@ export default function App() {
                 className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
               >
                 Let Them Stay
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Sell Properties Modal */}
+      {showSellPropertiesModal && bankruptPlayer && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+            <div className="text-center mb-4">
+              <h3 className="text-lg font-bold mb-2 text-red-600">💰 Emergency Property Sale</h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Player {bankruptPlayer} has negative coins! Sell properties to get back in the game.
+              </p>
+              <p className="text-sm text-gray-600">
+                Properties sell for 80% of their original price.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              {getPlayerProperties(bankruptPlayer).map((property) => (
+                <div key={property.propertyIndex} className="border rounded-lg p-3 bg-gray-50">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h4 className="font-semibold">{property.name}</h4>
+                      <p className="text-sm text-gray-600">
+                        Original Price: ${property.price} | Sell Price: ${property.sellPrice}
+                      </p>
+                      {property.houses > 0 && (
+                        <p className="text-sm text-green-600">Houses: {property.houses}</p>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => sellProperty(property.propertyIndex)}
+                      className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+                    >
+                      Sell for ${property.sellPrice}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-4 text-center">
+              <p className="text-sm text-gray-600">
+                Current Coins: {bankruptPlayer === 1 ? player1Coins : player2Coins}
+              </p>
+              <button
+                onClick={() => {
+                  setShowSellPropertiesModal(false);
+                  // Switch turns to continue the game
+                  setTimeout(() => {
+                    setTurn(prev => (prev === 1 ? 2 : 1));
+                  }, 500);
+                }}
+                className="mt-3 bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600"
+              >
+                Continue Game
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bankruptcy Modal */}
+      {showBankruptcyModal && bankruptPlayer && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
+            <div className="text-center mb-4">
+              <h3 className="text-2xl font-bold mb-2 text-red-600">💔 BANKRUPT!</h3>
+              <div className="p-4 rounded-lg mb-4 bg-red-50 border-2 border-red-200">
+                <p className="font-semibold text-gray-800 mb-2">
+                  But fret not, you're rich with your {bankruptPlayer === 1 ? 'Player 2' : 'Player 1'}'s love ❤️
+                </p>
+                <p className="text-sm text-gray-600">
+                  Game Over - {bankruptPlayer === 1 ? 'Player 2' : 'Player 1'} wins!
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-center">
+              <button
+                onClick={() => {
+                  setShowBankruptcyModal(false);
+                  setGameEnded(false);
+                  // Reset game state here if needed
+                }}
+                className="bg-gray-500 text-white px-6 py-2 rounded hover:bg-gray-600"
+              >
+                Close
               </button>
             </div>
           </div>
