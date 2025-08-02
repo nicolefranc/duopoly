@@ -1,7 +1,19 @@
 import React from 'react';
 import Tile from './Tile';
+import Dice from './Dice';
 
-export default function Board({ tiles, positionP1, positionP2, propertyOwnership, propertyHouses, properties, player1InJail, player2InJail }) {
+export default function Board({ 
+  tiles, 
+  positionP1, 
+  positionP2, 
+  propertyOwnership, 
+  propertyHouses, 
+  properties, 
+  player1InJail, 
+  player2InJail,
+  onRoll,
+  message
+}) {
   // Define square layout: clockwise, with empty center
   const o = -1
   const boardLayout = [
@@ -15,7 +27,7 @@ export default function Board({ tiles, positionP1, positionP2, propertyOwnership
 
   return (
     <div className="flex flex-col items-center">
-      <div className="grid grid-cols-6 grid-rows-6 gap-1">
+      <div className="grid grid-cols-6 grid-rows-6 gap-1 relative">
         {boardLayout.map((tileIndex, i) => {
           if (tileIndex === o) {
             return (
@@ -39,6 +51,27 @@ export default function Board({ tiles, positionP1, positionP2, propertyOwnership
             )
           }
         })}
+        
+        {/* Center Dice and Message */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="bg-white rounded-lg shadow-lg p-4 border-2 border-gray-200 pointer-events-auto">
+            <div className="flex flex-col items-center gap-3">
+              {/* Dice */}
+              <div className="text-center">
+                <Dice onRoll={onRoll} />
+              </div>
+              
+              {/* Game Messages */}
+              {message && (
+                <div className="w-full max-w-xs">
+                  <div className="bg-gray-50 p-3 rounded-lg border">
+                    <p className="text-xs text-gray-800 whitespace-pre-wrap text-center">{message}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

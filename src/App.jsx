@@ -609,39 +609,51 @@ export default function App() {
     <div className="min-h-screen bg-pink-50 text-gray-800 p-4">
       <h1 className="text-3xl font-bold text-center mb-4">💖 Duopoly Lite – 2 Player Mode</h1>
 
-      <div className="flex gap-8">
-        {/* Player Panel on the left */}
-        <div className="w-80">
-          <PlayerPanel
-            player1Coins={player1Coins}
-            player2Coins={player2Coins}
-            turn={turn}
+      <div className="flex gap-8 justify-center">
+        {/* Player 1 Panel - Left */}
+        <PlayerPanel
+          playerNumber={1}
+          playerCoins={player1Coins}
+          turn={turn}
+          propertyOwnership={propertyOwnership}
+          propertyHouses={propertyHouses}
+          properties={properties}
+          tiles={tiles}
+          onRoll={handleRoll}
+          playerInJail={player1InJail}
+          playerJailTurns={player1JailTurns}
+        />
+        
+        {/* Center Section - Board */}
+        <div className="flex flex-col items-center">
+          {/* Game Board with Dice and Messages in Center */}
+          <Board
+            tiles={tiles}
+            positionP1={positionP1}
+            positionP2={positionP2}
             propertyOwnership={propertyOwnership}
             propertyHouses={propertyHouses}
             properties={properties}
-            tiles={tiles}
+            player1InJail={player1InJail}
+            player2InJail={player2InJail}
             onRoll={handleRoll}
             message={message}
-            player1InJail={player1InJail}
-            player2InJail={player2InJail}
-            player1JailTurns={player1JailTurns}
-            player2JailTurns={player2JailTurns}
-          />
-      </div>
-
-        {/* Board on the right */}
-        <div className="flex-1">
-      <Board
-        tiles={tiles}
-        positionP1={positionP1}
-        positionP2={positionP2}
-            propertyOwnership={propertyOwnership}
-            propertyHouses={propertyHouses}
-            properties={properties}
-            player1InJail={player1InJail}
-            player2InJail={player2InJail}
           />
         </div>
+        
+        {/* Player 2 Panel - Right */}
+        <PlayerPanel
+          playerNumber={2}
+          playerCoins={player2Coins}
+          turn={turn}
+          propertyOwnership={propertyOwnership}
+          propertyHouses={propertyHouses}
+          properties={properties}
+          tiles={tiles}
+          onRoll={handleRoll}
+          playerInJail={player2InJail}
+          playerJailTurns={player2JailTurns}
+        />
       </div>
 
       {/* Action Modal */}
