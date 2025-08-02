@@ -17,8 +17,8 @@ export default function App() {
   const [message, setMessage] = useState('');
   
   // Player economy state
-  const [player1Coins, setPlayer1Coins] = useState(100);
-  const [player2Coins, setPlayer2Coins] = useState(100);
+  const [player1Coins, setPlayer1Coins] = useState(650);
+  const [player2Coins, setPlayer2Coins] = useState(650);
   const [propertyOwnership, setPropertyOwnership] = useState({});
   const [propertyHouses, setPropertyHouses] = useState({});
   const [showActionModal, setShowActionModal] = useState(false);
@@ -256,6 +256,14 @@ export default function App() {
     return null;
   };
 
+  // Calculate rent based on number of houses
+  const calculateRent = (property, houses) => {
+    if (houses === 0) {
+      return property.rent;
+    }
+    return property.rentWithHouses[houses - 1] || property.rent;
+  };
+
   const handlePropertyAction = (action, propertyIndex) => {
     const property = properties[propertyIndex];
     
@@ -432,8 +440,8 @@ export default function App() {
         }, 500);
       }
     } else {
-      // Opponent owns the property - pay rent
-      const rentAmount = property.rent + (currentHouses * property.rent);
+          // Opponent owns the property - pay rent
+    const rentAmount = calculateRent(property, currentHouses);
       const currentCoins = getCurrentPlayerCoins();
       
       if (currentCoins >= rentAmount) {
@@ -540,9 +548,9 @@ export default function App() {
     const passedPicnic = checkIfPassedPicnic(oldPos, newPos);
     if (passedPicnic) {
       const currentCoins = getCurrentPlayerCoins();
-      const newCoins = currentCoins + 100; // Picnic reward
+      const newCoins = currentCoins + 150; // Picnic reward
       setCurrentPlayerCoins(newCoins);
-      setMessage(`Player ${turn} passed "Have a picnic" and gained 100 coins! 🧺`);
+      setMessage(`Player ${turn} passed "Have a picnic" and gained 150 coins! 🧺`);
     }
 
     // Handle landing on property
@@ -583,7 +591,7 @@ export default function App() {
     
     // Switch turns after card action
     setTimeout(() => {
-      setTurn(prev => (prev === 1 ? 2 : 1));
+    setTurn(prev => (prev === 1 ? 2 : 1));
     }, 1000);
   };
 
@@ -619,14 +627,14 @@ export default function App() {
             player1JailTurns={player1JailTurns}
             player2JailTurns={player2JailTurns}
           />
-        </div>
+      </div>
 
         {/* Board on the right */}
         <div className="flex-1">
-          <Board
-            tiles={tiles}
-            positionP1={positionP1}
-            positionP2={positionP2}
+      <Board
+        tiles={tiles}
+        positionP1={positionP1}
+        positionP2={positionP2}
             propertyOwnership={propertyOwnership}
             propertyHouses={propertyHouses}
             properties={properties}

@@ -93,6 +93,14 @@ const HoverCardContent = ({ children, position }) => {
 
 export default function Tile({ tile, isP1, isP2, propertyOwnership, propertyHouses, properties, player1InJail, player2InJail, position }) {
   const [showModal, setShowModal] = useState(false);
+
+  // Calculate rent based on number of houses
+  const calculateRent = (property, houses) => {
+    if (houses === 0) {
+      return property.rent;
+    }
+    return property.rentWithHouses[houses - 1] || property.rent;
+  };
   
   let tileData
 
@@ -193,7 +201,7 @@ export default function Tile({ tile, isP1, isP2, propertyOwnership, propertyHous
       {/* Property price/rent info */}
       {tile.type === PROPERTY && (
         <div className="text-xs text-gray-600">
-          {owner ? `Rent: ${tileData.rent + (houses * tileData.rent)}` : `$${tileData.price}`}
+                      {owner ? `Rent: ${calculateRent(tileData, houses)}` : `$${tileData.price}`}
         </div>
       )}
 
@@ -251,8 +259,8 @@ export default function Tile({ tile, isP1, isP2, propertyOwnership, propertyHous
                 <span className="font-semibold">${tileData.price}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Rent:</span>
-                <span className="font-semibold">${tileData.rent}</span>
+                            <span className="text-gray-600">Rent:</span>
+            <span className="font-semibold">${calculateRent(tileData, houses)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Upgrade:</span>

@@ -1,17 +1,17 @@
 const utilities = [
   {
     name: "Love Tax",
-    reward: -150,
+    reward: -120,
     imgPath: "/src/assets/board.png"
   },
   {
     name: "Jealousy Tax",
-    reward: -100,
+    reward: -80,
     imgPath: "/src/assets/board.png"
   },
   {
     name: "Fight Tax",
-    reward: -50,
+    reward: -60,
     imgPath: "/src/assets/board.png"
   }
 ]

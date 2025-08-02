@@ -3,37 +3,37 @@ const chest = [
   {
     name: "Write a haiku about when we first met",
     manual: false,
-    reward: 20,
+    reward: 60,
     imgPath: "/src/assets/board.png"
   },
   {
     name: "Reflect on a challenge we overcame together that made us stronger",
     manual: false,
-    reward: 25,
+    reward: 80,
     imgPath: "/src/assets/board.png"
   },
   {
     name: "Draw me in your favourite outfit of me",
     manual: true,
-    reward: 20,
+    reward: 70,
     imgPath: "/src/assets/board.png"
   },
   {
     name: "Create a set of emojis that describe our relationship journey",
     manual: false,
-    reward: 15,
+    reward: 50,
     imgPath: "/src/assets/board.png"
   },
   {
     name: "If you could steal one personality trait from me, what would it be?",
     manual: false,
-    reward: 10,
+    reward: 40,
     imgPath: "/src/assets/board.png"
   },
   {
     name: "What was our first water adventure together?",
     manual: true,
-    reward: 5,
+    reward: 30,
     imgPath: "/src/assets/board.png"
   }
 ];

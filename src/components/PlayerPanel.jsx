@@ -16,6 +16,14 @@ export default function PlayerPanel({
   player1JailTurns,
   player2JailTurns
 }) {
+  // Calculate rent based on number of houses
+  const calculateRent = (property, houses) => {
+    if (houses === 0) {
+      return property.rent;
+    }
+    return property.rentWithHouses[houses - 1] || property.rent;
+  };
+
   const getPlayerProperties = (playerNumber) => {
     const ownedProperties = [];
     Object.entries(propertyOwnership).forEach(([propertyIndex, owner]) => {
@@ -70,7 +78,7 @@ export default function PlayerPanel({
                 <div key={property.propertyIndex} className="bg-pink-50 p-2 rounded text-xs">
                   <p className="font-semibold">{property.name}</p>
                   <p className="text-gray-600">Houses: {property.houses}/4</p>
-                  <p className="text-gray-600">Rent: {property.rent + (property.houses * property.rent)}</p>
+                  <p className="text-gray-600">Rent: {calculateRent(property, property.houses)}</p>
                 </div>
               ))}
             </div>
@@ -104,7 +112,7 @@ export default function PlayerPanel({
                 <div key={property.propertyIndex} className="bg-blue-50 p-2 rounded text-xs">
                   <p className="font-semibold">{property.name}</p>
                   <p className="text-gray-600">Houses: {property.houses}/4</p>
-                  <p className="text-gray-600">Rent: {property.rent + (property.houses * property.rent)}</p>
+                  <p className="text-gray-600">Rent: {calculateRent(property, property.houses)}</p>
                 </div>
               ))}
             </div>
@@ -130,7 +138,7 @@ export default function PlayerPanel({
       <div className="mt-6 text-xs text-gray-600">
         <h4 className="font-semibold mb-2">Game Rules:</h4>
         <ul className="space-y-1">
-          <li>• Start with 100 coins each</li>
+          <li>• Start with 800 coins each</li>
           <li>• Buy properties when you land on them</li>
           <li>• Build houses on your properties (max 4)</li>
           <li>• Pay rent when landing on opponent's property</li>
