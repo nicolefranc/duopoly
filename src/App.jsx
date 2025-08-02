@@ -3,6 +3,8 @@ import tiles from './data/tiles';
 import properties from './data/properties';
 import chest from './data/chest';
 import chance from './data/chance';
+import utilities from './data/utilities';
+import corner from './data/corner';
 import Board from './components/Board';
 import PlayerPanel from './components/PlayerPanel';
 
@@ -23,6 +25,15 @@ export default function App() {
   const [currentAction, setCurrentAction] = useState(null);
   const [showCardModal, setShowCardModal] = useState(false);
   const [currentCard, setCurrentCard] = useState(null);
+  const [showBailModal, setShowBailModal] = useState(false);
+  
+  // Jail system state
+  const [player1JailTurns, setPlayer1JailTurns] = useState(0);
+  const [player2JailTurns, setPlayer2JailTurns] = useState(0);
+  const [player1InJail, setPlayer1InJail] = useState(false);
+  const [player2InJail, setPlayer2InJail] = useState(false);
+  const [player1CanBeBailed, setPlayer1CanBeBailed] = useState(false);
+  const [player2CanBeBailed, setPlayer2CanBeBailed] = useState(false);
 
   // Initialize properties with no owners
   useEffect(() => {
@@ -43,6 +54,101 @@ export default function App() {
     } else {
       setPlayer2Coins(amount);
     }
+  };
+
+  const getCurrentPlayerJailState = () => {
+    if (turn === 1) {
+      return {
+        inJail: player1InJail,
+        jailTurns: player1JailTurns,
+        canBeBailed: player1CanBeBailed
+      };
+    } else {
+      return {
+        inJail: player2InJail,
+        jailTurns: player2JailTurns,
+        canBeBailed: player2CanBeBailed
+      };
+    }
+  };
+
+  const setCurrentPlayerJailState = (inJail, jailTurns, canBeBailed) => {
+    if (turn === 1) {
+      setPlayer1InJail(inJail);
+      setPlayer1JailTurns(jailTurns);
+      setPlayer1CanBeBailed(canBeBailed);
+    } else {
+      setPlayer2InJail(inJail);
+      setPlayer2JailTurns(jailTurns);
+      setPlayer2CanBeBailed(canBeBailed);
+    }
+  };
+
+  const sendPlayerToJail = (playerNumber) => {
+    if (playerNumber === 1) {
+      setPlayer1InJail(true);
+      setPlayer1JailTurns(2);
+      setPlayer1CanBeBailed(false);
+      setPositionP1(15); // Move to Love Jail position
+    } else {
+      setPlayer2InJail(true);
+      setPlayer2JailTurns(2);
+      setPlayer2CanBeBailed(false);
+      setPositionP2(15); // Move to Love Jail position
+    }
+  };
+
+  const handleBailOut = (jailedPlayer) => {
+    const bailingPlayer = jailedPlayer === 1 ? 2 : 1;
+    const bailingPlayerCoins = bailingPlayer === 1 ? player1Coins : player2Coins;
+    
+    if (bailingPlayerCoins >= 15) {
+      // Deduct coins from bailing player
+      if (bailingPlayer === 1) {
+        setPlayer1Coins(player1Coins - 15);
+      } else {
+        setPlayer2Coins(player2Coins - 15);
+      }
+      
+      // Release jailed player
+      if (jailedPlayer === 1) {
+        setPlayer1InJail(false);
+        setPlayer1JailTurns(0);
+        setPlayer1CanBeBailed(false);
+      } else {
+        setPlayer2InJail(false);
+        setPlayer2JailTurns(0);
+        setPlayer2CanBeBailed(false);
+      }
+      
+      setMessage(`Player ${bailingPlayer} bailed out Player ${jailedPlayer} for 15 coins! 💖`);
+      setShowBailModal(false);
+    } else {
+      setMessage(`Player ${bailingPlayer} doesn't have enough coins to bail out Player ${jailedPlayer}!`);
+    }
+  };
+
+  const checkIfPassedPicnic = (oldPos, newPos) => {
+    return (newPos < oldPos) || oldPos === 0
+    // // "Have a picnic" is at position 0
+    // const picnicPosition = 0;
+    
+    // // If player moved from a position after picnic to a position before picnic (wrapped around)
+    // if (oldPos > picnicPosition && newPos < picnicPosition) {
+    //   return true;
+    // }
+    
+    // // If player moved from a position before picnic to a position after picnic (normal forward movement)
+    // if (oldPos < picnicPosition && newPos > picnicPosition) {
+    //   return true;
+    // }
+    
+    // // If player landed exactly on picnic (this shouldn't happen with the new logic, but just in case)
+    // if (newPos === picnicPosition) {
+    //   return false; // Don't give reward for landing on it, only for passing
+    // }
+    
+    // return false;
   };
 
   const getPropertyAtPosition = (position) => {
@@ -115,6 +221,66 @@ export default function App() {
       return;
     }
     
+    if (tile.type === 'utility') {
+      // Handle utility card - automatic reward
+      const utility = utilities[tile.idx];
+      const currentCoins = getCurrentPlayerCoins();
+      const newCoins = Math.max(0, currentCoins + utility.reward);
+      setCurrentPlayerCoins(newCoins);
+      
+      const rewardText = utility.reward >= 0 ? `gained ${utility.reward}` : `lost ${Math.abs(utility.reward)}`;
+      setMessage(`Player ${turn} ${rewardText} coins from ${utility.name}!`);
+      
+      // Switch turns after utility
+      setTimeout(() => {
+        setTurn(prev => (prev === 1 ? 2 : 1));
+      }, 1000);
+      return;
+    }
+    
+    if (tile.type === 'corner') {
+      // Handle corner card
+      const cornerCard = corner[tile.idx];
+      
+      if (cornerCard.name === "Go to love jail") {
+        // Send player to jail
+        sendPlayerToJail(turn);
+        setMessage(`Player ${turn} was sent to Love Jail! 💔`);
+        
+        // Switch turns immediately
+        setTimeout(() => {
+          setTurn(prev => (prev === 1 ? 2 : 1));
+        }, 1000);
+        return;
+      } else if (cornerCard.name === "Love Jail") {
+        // Player is already in jail, just switch turns
+        setTimeout(() => {
+          setTurn(prev => (prev === 1 ? 2 : 1));
+        }, 500);
+        return;
+      } else if (cornerCard.name === "Have a picnic") {
+        // No reward for landing on picnic - only for passing it
+        setTimeout(() => {
+          setTurn(prev => (prev === 1 ? 2 : 1));
+        }, 500);
+        return;
+      } else {
+        // Other corner cards - automatic reward
+        const currentCoins = getCurrentPlayerCoins();
+        const newCoins = Math.max(0, currentCoins + cornerCard.reward);
+        setCurrentPlayerCoins(newCoins);
+        
+        const rewardText = cornerCard.reward >= 0 ? `gained ${cornerCard.reward}` : `lost ${Math.abs(cornerCard.reward)}`;
+        setMessage(`Player ${turn} ${rewardText} coins from ${cornerCard.name}!`);
+        
+        // Switch turns after corner card
+        setTimeout(() => {
+          setTurn(prev => (prev === 1 ? 2 : 1));
+        }, 1000);
+        return;
+      }
+    }
+    
     const property = getPropertyAtPosition(position);
     
     if (!property) {
@@ -179,16 +345,57 @@ export default function App() {
   };
 
   const handleRoll = () => {
+    const currentJailState = getCurrentPlayerJailState();
+    
+    // Check if current player is in jail
+    if (currentJailState.inJail) {
+      if (currentJailState.jailTurns > 0) {
+        // Player is still serving jail time
+        const newJailTurns = currentJailState.jailTurns - 1;
+        setCurrentPlayerJailState(true, newJailTurns, newJailTurns === 0);
+        
+        if (newJailTurns === 0) {
+          setMessage(`Player ${turn} has served their jail time and can be bailed out!`);
+          // Check if other player can bail them out
+          const otherPlayer = turn === 1 ? 2 : 1;
+          const otherPlayerCoins = otherPlayer === 1 ? player1Coins : player2Coins;
+          
+          if (otherPlayerCoins >= 15) {
+            setShowBailModal(true);
+          } else {
+            setMessage(`Player ${otherPlayer} doesn't have enough coins to bail out Player ${turn}. Player ${turn} will be released automatically.`);
+            setTimeout(() => {
+              setCurrentPlayerJailState(false, 0, false);
+              setTurn(prev => (prev === 1 ? 2 : 1));
+            }, 2000);
+          }
+        } else {
+          setMessage(`Player ${turn} is in jail for ${newJailTurns} more turn(s).`);
+          setTimeout(() => {
+            setTurn(prev => (prev === 1 ? 2 : 1));
+          }, 1000);
+        }
+      } else {
+        // Player can be bailed out
+        setMessage(`Player ${turn} can be bailed out of jail!`);
+        setShowBailModal(true);
+      }
+      return;
+    }
+    
     const roll = Math.floor(Math.random() * 3) + 1;
     let newPos;
+    let oldPos;
 
     if (turn === 1) {
+      oldPos = positionP1;
       newPos = positionP1 + roll;
       if (newPos >= boardLength) {
         newPos = newPos % boardLength;
       }
       setPositionP1(newPos);
     } else {
+      oldPos = positionP2;
       newPos = positionP2 + roll;
       if (newPos >= boardLength) {
         newPos = newPos % boardLength;
@@ -197,6 +404,15 @@ export default function App() {
     }
 
     setMessage(`Player ${turn} rolled a ${roll}!`);
+
+    // Check if player passed "Have a picnic" (position 0)
+    const passedPicnic = checkIfPassedPicnic(oldPos, newPos);
+    if (passedPicnic) {
+      const currentCoins = getCurrentPlayerCoins();
+      const newCoins = currentCoins + 200; // Picnic reward
+      setCurrentPlayerCoins(newCoins);
+      setMessage(`Player ${turn} passed "Have a picnic" and gained 200 coins! 🧺`);
+    }
 
     // Handle landing on property
     setTimeout(() => {
@@ -262,6 +478,10 @@ export default function App() {
             tiles={tiles}
             onRoll={handleRoll}
             message={message}
+            player1InJail={player1InJail}
+            player2InJail={player2InJail}
+            player1JailTurns={player1JailTurns}
+            player2JailTurns={player2JailTurns}
           />
         </div>
 
@@ -274,6 +494,8 @@ export default function App() {
             propertyOwnership={propertyOwnership}
             propertyHouses={propertyHouses}
             properties={properties}
+            player1InJail={player1InJail}
+            player2InJail={player2InJail}
           />
         </div>
       </div>
@@ -352,6 +574,53 @@ export default function App() {
                 className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
               >
                 Skip
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bail Modal */}
+      {showBailModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
+            <div className="text-center mb-4">
+              <h3 className="text-lg font-bold mb-2">💖 Bail Out Opportunity</h3>
+              <div className="p-4 rounded-lg mb-4 bg-pink-50 border-2 border-pink-200">
+                <p className="font-semibold text-gray-800 mb-2">
+                  Player {turn} can be bailed out of Love Jail!
+                </p>
+                <p className="text-lg font-bold text-pink-600 mb-2">
+                  Cost: 15 coins
+                </p>
+                <p className="text-sm text-gray-600">
+                  Show your love by bailing them out! 💕
+                </p>
+              </div>
+              <p className="text-sm text-gray-600">
+                Player {turn === 1 ? 2 : 1} Coins: {turn === 1 ? player2Coins : player1Coins}
+              </p>
+            </div>
+
+            <div className="flex gap-2 justify-center">
+              <button
+                onClick={() => handleBailOut(turn)}
+                className="bg-pink-500 text-white px-4 py-2 rounded hover:bg-pink-600"
+              >
+                Bail Out (15 coins)
+              </button>
+              <button
+                onClick={() => {
+                  setShowBailModal(false);
+                  // Release player automatically
+                  setCurrentPlayerJailState(false, 0, false);
+                  setTimeout(() => {
+                    setTurn(prev => (prev === 1 ? 2 : 1));
+                  }, 500);
+                }}
+                className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+              >
+                Let Them Stay
               </button>
             </div>
           </div>

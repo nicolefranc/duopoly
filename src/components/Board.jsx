@@ -1,7 +1,7 @@
 import React from 'react';
 import Tile from './Tile';
 
-export default function Board({ tiles, positionP1, positionP2, propertyOwnership, propertyHouses, properties }) {
+export default function Board({ tiles, positionP1, positionP2, propertyOwnership, propertyHouses, properties, player1InJail, player2InJail }) {
   // Define square layout: clockwise, with empty center
   const o = -1
   const boardLayout = [
@@ -32,6 +32,8 @@ export default function Board({ tiles, positionP1, positionP2, propertyOwnership
                 propertyOwnership={propertyOwnership}
                 propertyHouses={propertyHouses}
                 properties={properties}
+                player1InJail={player1InJail}
+                player2InJail={player2InJail}
               />
             )
           }

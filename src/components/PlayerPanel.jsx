@@ -10,7 +10,11 @@ export default function PlayerPanel({
   properties,
   tiles,
   onRoll,
-  message
+  message,
+  player1InJail,
+  player2InJail,
+  player1JailTurns,
+  player2JailTurns
 }) {
   const getPlayerProperties = (playerNumber) => {
     const ownedProperties = [];
@@ -49,6 +53,12 @@ export default function PlayerPanel({
         <div className="bg-pink-50 p-3 rounded-lg">
           <p className="font-semibold">Coins: {player1Coins}</p>
           <p className="text-sm text-gray-600">Properties: {player1Properties.length}</p>
+          {player1InJail && (
+            <div className="mt-2 p-2 bg-red-100 rounded text-xs">
+              <p className="font-semibold text-red-700">🔒 In Love Jail</p>
+              <p className="text-red-600">Turns remaining: {player1JailTurns}</p>
+            </div>
+          )}
         </div>
         
         {/* Player 1 Properties */}
@@ -77,6 +87,12 @@ export default function PlayerPanel({
         <div className="bg-blue-50 p-3 rounded-lg">
           <p className="font-semibold">Coins: {player2Coins}</p>
           <p className="text-sm text-gray-600">Properties: {player2Properties.length}</p>
+          {player2InJail && (
+            <div className="mt-2 p-2 bg-red-100 rounded text-xs">
+              <p className="font-semibold text-red-700">🔒 In Love Jail</p>
+              <p className="text-red-600">Turns remaining: {player2JailTurns}</p>
+            </div>
+          )}
         </div>
         
         {/* Player 2 Properties */}

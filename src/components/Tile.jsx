@@ -7,7 +7,7 @@ import chest from '../data/chest';
 import corner from '../data/corner';
 import utilities from '../data/utilities';
 
-export default function Tile({ tile, isP1, isP2, propertyOwnership, propertyHouses, properties }) {
+export default function Tile({ tile, isP1, isP2, propertyOwnership, propertyHouses, properties, player1InJail, player2InJail }) {
 
   let tileData
 
@@ -43,6 +43,10 @@ export default function Tile({ tile, isP1, isP2, propertyOwnership, propertyHous
     return 'bg-white border-gray-300';
   };
 
+  // Check if this is the Love Jail tile and if any player is in jail
+  const isLoveJail = tile.type === CORNER && tileData && tileData.name === "Love Jail";
+  const hasJailedPlayers = player1InJail || player2InJail;
+
   return (
     <div
       className={`w-28 h-28 border rounded flex flex-col items-center justify-center text-center text-xs font-semibold ${getTileBackground()}`}
@@ -77,6 +81,17 @@ export default function Tile({ tile, isP1, isP2, propertyOwnership, propertyHous
       {tile.type === PROPERTY && (
         <div className="text-xs text-gray-600">
           {owner ? `Rent: ${tileData.rent + (houses * tileData.rent)}` : `$${tileData.price}`}
+        </div>
+      )}
+
+      {/* Jail indicator */}
+      {isLoveJail && hasJailedPlayers && (
+        <div className="mt-1">
+          <div className="text-xs text-red-600 font-semibold">🔒 Jail</div>
+          <div className="flex gap-1 justify-center">
+            {player1InJail && <span className="text-pink-600 text-xs">P1</span>}
+            {player2InJail && <span className="text-blue-500 text-xs">P2</span>}
+          </div>
         </div>
       )}
 
