@@ -1,15 +1,3 @@
-// src/data/tiles.js
-
-// const tiles = [
-//     { name: "Start", event: null },
-//     { name: "Picnic Memory", event: "Describe our picnic night in 3 words." },
-//     { name: "Draw Me", event: "Draw each other from memory in 1 minute." },
-//     { name: "Compliment Battle", event: "Take turns giving compliments until someone repeats." },
-//     { name: "Flirty Charades", event: "Act out a romantic moment without words." },
-//     { name: "Love Letter Race", event: "Write a 30-second love letter. Most heartfelt wins." },
-//     { name: "Emoji Gift", event: "Send your partner 5 emojis to describe how you feel now." },
-//     { name: "Final Stop", event: "You made it to today. Celebrate with your future plans ❤️" },
-//   ];
 export const CORNER = "corner"
 export const PROPERTY = "property"
 export const CHEST = "chest"

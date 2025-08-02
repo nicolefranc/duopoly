@@ -12,7 +12,7 @@ const chance = [
     reward: 100,
   },
   {
-    name: "You're 8,000 km away from me",
+    name: "You're 15,000 km away from me",
     reward: -120,
   }
 ];
