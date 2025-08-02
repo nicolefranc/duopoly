@@ -35,7 +35,19 @@ const chest = [
     manual: true,
     reward: 30,
     imgPath: "/src/assets/board.png"
-  }
+  },
+  {
+    name: "Record a 30-second voice message describing how you feel about us today",
+    manual: false,
+    reward: 50,
+    imgPath: "/src/assets/board.png"
+  },
+  {
+    name: "Sketch our dream travel destination together",
+    manual: true,
+    reward: 75,
+    imgPath: "/src/assets/board.png"
+  },
 ];
 
 export default chest

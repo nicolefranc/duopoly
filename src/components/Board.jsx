@@ -54,7 +54,7 @@ export default function Board({
         
         {/* Center Dice and Message */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="bg-white rounded-lg shadow-lg p-4 border-2 border-gray-200 pointer-events-auto">
+          <div className="rounded-lg p-4 border-gray-200 pointer-events-auto">
             <div className="flex flex-col items-center gap-3">
               {/* Dice */}
               <div className="text-center">
@@ -64,7 +64,7 @@ export default function Board({
               {/* Game Messages */}
               {message && (
                 <div className="w-full max-w-xs">
-                  <div className="bg-gray-50 p-3 rounded-lg border">
+                  <div className="bg-gray-50 p-3 rounded-lg ">
                     <p className="text-xs text-gray-800 whitespace-pre-wrap text-center">{message}</p>
                   </div>
                 </div>

@@ -94,6 +94,20 @@ const HoverCardContent = ({ children, position }) => {
 export default function Tile({ tile, isP1, isP2, propertyOwnership, propertyHouses, properties, player1InJail, player2InJail, position }) {
   const [showModal, setShowModal] = useState(false);
 
+  // Player configuration - easy to change names and emojis
+  const playerConfig = {
+    1: {
+      name: "Player 1",
+      emoji: "🎉",
+      color: "pink"
+    },
+    2: {
+      name: "Player 2", 
+      emoji: "🎉",
+      color: "blue"
+    }
+  };
+
   // Calculate rent based on number of houses
   const calculateRent = (property, houses) => {
     if (houses === 0) {
@@ -210,8 +224,8 @@ export default function Tile({ tile, isP1, isP2, propertyOwnership, propertyHous
         <div className="mt-1">
           <div className="text-xs text-red-600 font-semibold">🔒 Jail</div>
           <div className="flex gap-1 justify-center">
-            {player1InJail && <span className="text-pink-600 text-xs">P1</span>}
-            {player2InJail && <span className="text-blue-500 text-xs">P2</span>}
+            {player1InJail && <span className="text-pink-600 text-xs">{playerConfig[1].name}</span>}
+            {player2InJail && <span className="text-blue-500 text-xs">{playerConfig[2].name}</span>}
           </div>
         </div>
       )}
@@ -219,8 +233,8 @@ export default function Tile({ tile, isP1, isP2, propertyOwnership, propertyHous
       {/* Player position indicators */}
       {(isP1 || isP2) && (
         <div className="mt-1 flex gap-1">
-          {isP1 && <span className="text-pink-600 text-sm">P1 🎈</span>}
-          {isP2 && <span className="text-blue-500 text-sm">P2 🎉</span>}
+          {isP1 && <span className="text-pink-600 text-sm">{playerConfig[1].name} {playerConfig[1].emoji}</span>}
+          {isP2 && <span className="text-blue-500 text-sm">{playerConfig[2].name} {playerConfig[2].emoji}</span>}
         </div>
       )}
     </div>
@@ -274,7 +288,7 @@ export default function Tile({ tile, isP1, isP2, propertyOwnership, propertyHous
                 <div className="flex justify-between">
                   <span className="text-gray-600">Owner:</span>
                   <span className={`font-semibold ${owner === 1 ? 'text-pink-600' : 'text-blue-600'}`}>
-                    Player {owner}
+                    {playerConfig[owner].name}
                   </span>
                 </div>
               )}
