@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import tiles from './data/tiles';
 import properties from './data/properties';
+import chest from './data/chest';
+import chance from './data/chance';
 import Board from './components/Board';
 import PlayerPanel from './components/PlayerPanel';
 
@@ -19,6 +21,8 @@ export default function App() {
   const [propertyHouses, setPropertyHouses] = useState({});
   const [showActionModal, setShowActionModal] = useState(false);
   const [currentAction, setCurrentAction] = useState(null);
+  const [showCardModal, setShowCardModal] = useState(false);
+  const [currentCard, setCurrentCard] = useState(null);
 
   // Initialize properties with no owners
   useEffect(() => {
@@ -83,6 +87,34 @@ export default function App() {
   };
 
   const handleLanding = (position) => {
+    const tile = tiles[position];
+    
+    if (tile.type === 'chest') {
+      // Handle chest card
+      const shuffledChest = [...chest].sort(() => Math.random() - 0.5);
+      const selectedCard = shuffledChest[0];
+      setCurrentCard({
+        type: 'chest',
+        card: selectedCard,
+        position: position
+      });
+      setShowCardModal(true);
+      return;
+    }
+    
+    if (tile.type === 'chance') {
+      // Handle chance card
+      const shuffledChance = [...chance].sort(() => Math.random() - 0.5);
+      const selectedCard = shuffledChance[0];
+      setCurrentCard({
+        type: 'chance',
+        card: selectedCard,
+        position: position
+      });
+      setShowCardModal(true);
+      return;
+    }
+    
     const property = getPropertyAtPosition(position);
     
     if (!property) {
@@ -182,6 +214,37 @@ export default function App() {
     }, 500);
   };
 
+  const handleCardReward = () => {
+    if (currentCard) {
+      const reward = currentCard.card.reward;
+      const currentCoins = getCurrentPlayerCoins();
+      const newCoins = Math.max(0, currentCoins + reward); // Prevent negative coins
+      
+      setCurrentPlayerCoins(newCoins);
+      
+      const rewardText = reward >= 0 ? `gained ${reward}` : `lost ${Math.abs(reward)}`;
+      setMessage(`Player ${turn} ${rewardText} coins from ${currentCard.type} card!`);
+    }
+    
+    setShowCardModal(false);
+    setCurrentCard(null);
+    
+    // Switch turns after card action
+    setTimeout(() => {
+      setTurn(prev => (prev === 1 ? 2 : 1));
+    }, 1000);
+  };
+
+  const skipCardReward = () => {
+    setShowCardModal(false);
+    setCurrentCard(null);
+    
+    // Switch turns after skipping card
+    setTimeout(() => {
+      setTurn(prev => (prev === 1 ? 2 : 1));
+    }, 500);
+  };
+
   return (
     <div className="min-h-screen bg-pink-50 text-gray-800 p-4">
       <h1 className="text-3xl font-bold text-center mb-4">💖 Duopoly Lite – 2 Player Mode</h1>
@@ -242,6 +305,50 @@ export default function App() {
               </button>
               <button
                 onClick={skipAction}
+                className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+              >
+                Skip
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Card Modal */}
+      {showCardModal && currentCard && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
+            <div className="text-center mb-4">
+              <h3 className="text-lg font-bold mb-2">
+                {currentCard.type === 'chest' ? '💎 Chest Card' : '🎲 Chance Card'}
+              </h3>
+              <div className={`p-4 rounded-lg mb-4 ${
+                currentCard.type === 'chest' ? 'bg-blue-50 border-2 border-blue-200' : 'bg-orange-50 border-2 border-orange-200'
+              }`}>
+                <p className="font-semibold text-gray-800 mb-2">{currentCard.card.name}</p>
+                <p className={`text-lg font-bold ${
+                  currentCard.card.reward >= 0 ? 'text-green-600' : 'text-red-600'
+                }`}>
+                  {currentCard.card.reward >= 0 ? '+' : ''}{currentCard.card.reward} coins
+                </p>
+                {currentCard.card.manual !== undefined && (
+                  <p className="text-sm text-gray-600 mt-2">
+                    {currentCard.card.manual ? 'Manual task required' : 'Automatic reward'}
+                  </p>
+                )}
+              </div>
+              <p className="text-sm text-gray-600">Current Coins: {getCurrentPlayerCoins()}</p>
+            </div>
+
+            <div className="flex gap-2 justify-center">
+              <button
+                onClick={handleCardReward}
+                className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+              >
+                Award Reward
+              </button>
+              <button
+                onClick={skipCardReward}
                 className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
               >
                 Skip
