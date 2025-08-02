@@ -34,6 +34,7 @@ export default function Board({ tiles, positionP1, positionP2, propertyOwnership
                 properties={properties}
                 player1InJail={player1InJail}
                 player2InJail={player2InJail}
+                position={i}
               />
             )
           }
